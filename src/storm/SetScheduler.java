@@ -92,7 +92,7 @@ public class SetScheduler implements IScheduler {
 		
 		for (String SupervisorId : supervisors.keySet()) {
 			
-			SupervisorDetails supervisor = cluster.getSupervisorById(SupervisorId);
+		    SupervisorDetails supervisor = cluster.getSupervisorById(SupervisorId);
 			//集群中没有该set supervisor
 			if (supervisor == null) continue;
 			
