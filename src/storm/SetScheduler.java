@@ -42,8 +42,7 @@ public class SetScheduler implements IScheduler {
         for (String k : activeSetVisors.keySet()) {
             Map<String, List<Integer>> supervisor = activeSetVisors.get(k);
             for (String k1 : supervisor.keySet()) {
-                logger.info("active set visors:" + k + "-" + k1 + "-"
-                        + supervisor.get(k1));
+                logger.info("active set visors:" + k + "-" + k1 + "-" + supervisor.get(k1));
             }
         }
     }
@@ -73,14 +72,12 @@ public class SetScheduler implements IScheduler {
                 // supervisor.scheduler.meta:name - "SupervisorName"
                 if (metaName != null && metaName.equals(SupervisorName)) {
 
-                    List<SupervisorDetails> availableSetVisorList = availableSetVisors
-                            .get(SupervisorName);
+                    List<SupervisorDetails> availableSetVisorList = availableSetVisors.get(SupervisorName);
                     if (availableSetVisorList == null) {
                         availableSetVisorList = new ArrayList<SupervisorDetails>();
                     }
                     availableSetVisorList.add(supervisor);
-                    availableSetVisors.put(SupervisorName,
-                            availableSetVisorList);
+                    availableSetVisors.put(SupervisorName, availableSetVisorList);
                     break;
                 }
             }
@@ -99,8 +96,7 @@ public class SetScheduler implements IScheduler {
 
         for (String SupervisorId : supervisors.keySet()) {
 
-            SupervisorDetails supervisor = cluster
-                    .getSupervisorById(SupervisorId);
+            SupervisorDetails supervisor = cluster.getSupervisorById(SupervisorId);
             // 集群中没有该set supervisor
             if (supervisor == null)
                 continue;
@@ -111,8 +107,7 @@ public class SetScheduler implements IScheduler {
                 continue;
 
             List<Integer> usedPorts = cluster.getUsedPorts(supervisor);
-            List<Integer> availablePorts = cluster
-                    .getAvailablePorts(supervisor);
+            List<Integer> availablePorts = cluster.getAvailablePorts(supervisor);
             List<Integer> freePorts = new ArrayList<Integer>();
 
             // 过滤出对应set supervisor中不存在的port
@@ -120,8 +115,7 @@ public class SetScheduler implements IScheduler {
 
                 WorkerSlot slot = new WorkerSlot(SupervisorId, port);
                 if (!cluster.isSlotOccupied(slot)
-                        || (!usedPorts.contains(port) && !availablePorts
-                                .contains(port))) {
+                    || (!usedPorts.contains(port) && !availablePorts.contains(port))) {
                     freePorts.add(port);
                 }
             }
@@ -145,8 +139,7 @@ public class SetScheduler implements IScheduler {
 
         for (String SupervisorName : this.activeSetVisors.keySet()) {
 
-            Map<String, List<Integer>> supervisors = this.activeSetVisors
-                    .get(SupervisorName);
+            Map<String, List<Integer>> supervisors = this.activeSetVisors.get(SupervisorName);
             if (supervisors.isEmpty())
                 continue;
 
@@ -162,26 +155,22 @@ public class SetScheduler implements IScheduler {
     @Override
     public void schedule(Topologies topologies, Cluster cluster) {
 
-        Collection<SupervisorDetails> supervisors = cluster.getSupervisors()
-                .values();
-        Map<String, List<SupervisorDetails>> availableSetVisors = this
-                .getAvailableSetVisors(supervisors);
+        Collection<SupervisorDetails> supervisors = cluster.getSupervisors().values();
+        Map<String, List<SupervisorDetails>> availableSetVisors = this.getAvailableSetVisors(supervisors);
 
         printActiveSetVisors();
         this.clearUnavailableSetVisor(availableSetVisors, cluster);
 
         if (!availableSetVisors.isEmpty()) {
 
-            Collection<TopologyDetails> topologiesCollection = topologies
-                    .getTopologies();
+            Collection<TopologyDetails> topologiesCollection = topologies.getTopologies();
             for (TopologyDetails topology : topologiesCollection) {
 
                 // 如果该topology已经分配
                 if (!cluster.needsScheduling(topology))
                     continue;
 
-                Map<String, List<ExecutorDetails>> componentToExecutors = cluster
-                        .getNeedsSchedulingComponentToExecutors(topology);
+                Map<String, List<ExecutorDetails>> componentToExecutors = cluster.getNeedsSchedulingComponentToExecutors(topology);
                 // 过滤出component名与set supervisor name前缀匹配的组件
                 // 然后将该组件分配一个空闲的set slot
                 for (String componentName : componentToExecutors.keySet()) {
@@ -202,15 +191,13 @@ public class SetScheduler implements IScheduler {
                     if (setVisors != null) {
 
                         // 获取当前已经被分配的set slot
-                        Map<String, List<Integer>> activeSetVisorList = this.activeSetVisors
-                                .get(setVisorName);
+                        Map<String, List<Integer>> activeSetVisorList = this.activeSetVisors.get(setVisorName);
                         WorkerSlot workerSlot = null;
 
                         // 从匹配的set supervisors中选取一个空闲的slot
                         for (SupervisorDetails supervisor : setVisors) {
 
-                            List<WorkerSlot> availableWorkSlotList = cluster
-                                    .getAvailableSlots(supervisor);
+                            List<WorkerSlot> availableWorkSlotList = cluster.getAvailableSlots(supervisor);
                             // 如果有空闲的slot,则直接分配给component
                             if (!availableWorkSlotList.isEmpty()) {
                                 workerSlot = availableWorkSlotList.get(0);
@@ -222,15 +209,12 @@ public class SetScheduler implements IScheduler {
                                 String supervisorId = supervisor.getId();
                                 List<Integer> ports = null;
                                 if (activeSetVisorList != null) {
-                                    ports = activeSetVisorList
-                                            .get(supervisorId);
+                                    ports = activeSetVisorList.get(supervisorId);
                                 }
 
                                 // 从当前被占用的port中选择第一个非活跃的set slot
-                                for (Integer port : cluster
-                                        .getUsedPorts(supervisor)) {
-                                    WorkerSlot slot = new WorkerSlot(
-                                            supervisorId, port);
+                                for (Integer port : cluster.getUsedPorts(supervisor)) {
+                                    WorkerSlot slot = new WorkerSlot(supervisorId, port);
 
                                     if (ports == null || !ports.contains(port)) {
                                         cluster.freeSlot(slot);
@@ -241,8 +225,7 @@ public class SetScheduler implements IScheduler {
                             }
                         }
 
-                        List<ExecutorDetails> executors = componentToExecutors
-                                .get(componentName);
+                        List<ExecutorDetails> executors = componentToExecutors.get(componentName);
                         // 如果存在空闲的set slot,否则输出日志
                         if (workerSlot != null) {
 
@@ -253,21 +236,14 @@ public class SetScheduler implements IScheduler {
                             }
 
                             if (activeSetVisorList.get(supervisorId) == null) {
-                                activeSetVisorList.put(
-                                        new String(supervisorId),
-                                        new ArrayList<Integer>());
+                                activeSetVisorList.put(new String(supervisorId), new ArrayList<Integer>());
                             }
-                            activeSetVisorList.get(supervisorId).add(
-                                    workerSlot.getPort());
-                            this.activeSetVisors.put(setVisorName,
-                                    activeSetVisorList);
-                            logger.info("chose SupervisorId:" + supervisorId
-                                    + " port:" + workerSlot.getPort() + " for "
-                                    + executors);
+                            activeSetVisorList.get(supervisorId).add(workerSlot.getPort());
+                            this.activeSetVisors.put(setVisorName, activeSetVisorList);
+                            logger.info("chose SupervisorId:" + supervisorId + " port:" + workerSlot.getPort() + " for " + executors);
 
                             // 分配set slot给component
-                            cluster.assign(workerSlot, topology.getId(),
-                                    executors);
+                            cluster.assign(workerSlot, topology.getId(), executors);
                         } else {
                             logger.warn("no available slot for " + executors);
                         }
